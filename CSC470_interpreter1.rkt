@@ -53,6 +53,10 @@
   (lambda (op left right)
     (list 'bool-exp op left right)))
 
+(define if-exp
+  (lambda (bool-exp true-exp false-exp)
+    (list 'if-exp bool-exp true-exp false-exp)))
+
 (define math-exp
   (lambda (op left right)
     (list 'math-exp op left right)))
@@ -81,6 +85,18 @@
 (define bool-exp->op
   (lambda (bool-exp)
     (cadr bool-exp)))
+
+(define if-exp->bool-exp
+  (lambda (if-exp)
+    (cadr if-exp)))
+
+(define if-exp->true-exp
+  (lambda (if-exp)
+    (caddr if-exp)))
+
+(define if-exp->false-exp
+  (lambda (if-exp)
+    (cadddr if-exp)))
 
 (define bool-exp->left
   (lambda (bool-exp)
@@ -131,6 +147,10 @@
   (lambda (lc-exp)
     (eq? (lc-exp->type lc-exp) 'bool-exp)))
 
+(define if-exp?
+  (lambda (lc-exp)
+    (eq? (lc-exp->type lc-exp) 'if-exp)))
+
 (define math-exp?
   (lambda (lc-exp)
     (eq? (lc-exp->type lc-exp) 'math-exp)))
@@ -159,6 +179,18 @@
 (define test-exp->right
   (lambda (test-exp)
     (cadddr test-exp)))
+
+(define question-exp->test-exp
+  (lambda (question-exp)
+    (cadr question-exp)))
+
+(define question-exp->true-exp
+  (lambda (question-exp)
+    (cadddr question-exp)))
+
+(define question-exp->false-exp
+  (lambda (question-exp)
+    (cadddr (caddr question-exp))))
 
 (define do-math->op
   (lambda (do-math-exp)
