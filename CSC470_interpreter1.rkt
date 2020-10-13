@@ -53,6 +53,10 @@
   (lambda (op left right)
     (list 'bool-exp op left right)))
 
+(define print-exp
+  (lambda (exp)
+    (list 'print-exp exp)))
+
 (define if-exp
   (lambda (bool-exp true-exp false-exp)
     (list 'if-exp bool-exp true-exp false-exp)))
@@ -81,6 +85,10 @@
 (define var-exp->var-name
   (lambda (var-exp)
     (cadr var-exp)))
+
+(define print-exp->exp
+  (lambda (print-exp)
+    (cadr print-exp)))
 
 (define bool-exp->op
   (lambda (bool-exp)
@@ -143,6 +151,10 @@
   (lambda (lc-exp)
     (eq? (lc-exp->type lc-exp) 'var-exp)))
 
+(define print-exp?
+  (lambda (lc-exp)
+    (eq? (lc-exp->type lc-exp) 'print-exp)))
+
 (define bool-exp?
   (lambda (lc-exp)
     (eq? (lc-exp->type lc-exp) 'bool-exp)))
@@ -168,6 +180,10 @@
   (lambda (literal-exp)
     (cadr literal-exp)))
 
+(define display-exp->exp
+  (lambda (display-exp)
+    (cadr display-exp)))
+
 (define test-exp->op
   (lambda (test-exp)
     (cadr test-exp)))
@@ -190,7 +206,7 @@
 
 (define question-exp->false-exp
   (lambda (question-exp)
-    (cadddr (caddr question-exp))))
+    (cadddr (cddr question-exp))))
 
 (define do-math->op
   (lambda (do-math-exp)
@@ -232,14 +248,19 @@
 ; (do-math '+ (literal 5) (literal 4))
 ; (test < (get-value a) (literal 7))
 ; (ask-question (test < (get-value a) (literal 7)) if-true-do-> (literal 1) if-false-do-> (literal 0))
+; (display (literal 7)) NOTE: displayed values are in purple (resolved are in blue)
 
 (define parse-expression
   (lambda (c0d3)
     (cond
       ((eq? (car c0d3) 'literal) (lit-exp (literal-exp->value c0d3)))
+      ((eq? (car c0d3) 'display) (print-exp (display-exp->exp c0d3)))
       ((eq? (car c0d3) 'test) (bool-exp (test-exp->op c0d3)
                                         (parse-expression (test-exp->left c0d3))
                                         (parse-expression (test-exp->right c0d3))))
+      ((eq? (car c0d3) 'ask-question) (if-exp (parse-expression (question-exp->test-exp c0d3))
+                                              (parse-expression (question-exp->true-exp c0d3))
+                                              (parse-expression (question-exp->false-exp c0d3))))
       ((eq? (car c0d3) 'do-math) (math-exp (do-math->op c0d3)
                                            (parse-expression (do-math->left c0d3))
                                            (parse-expression (do-math->right c0d3))))
@@ -273,10 +294,17 @@
     (cond
       ((lit-exp? lcexp) (lit-exp->value lcexp))
       ((var-exp? lcexp) (apply-env (var-exp->var-name lcexp) env))
+      ((print-exp? lcexp) (write (apply-expression (print-exp->exp lcexp) env)))
       ((bool-exp? lcexp) (let ((op (bool-exp->op lcexp))
                                (left (apply-expression (bool-exp->left lcexp) env))
                                (right (apply-expression (bool-exp->right lcexp) env)))
                            (resolve-boolean op left right)))
+      ((if-exp? lcexp) (let* ((bool-result (apply-expression (if-exp->bool-exp lcexp) env))
+                             (true-exp (if-exp->true-exp lcexp))
+                             (false-exp (if-exp->false-exp lcexp)))
+                         (if bool-result
+                             (apply-expression true-exp env)
+                             (apply-expression false-exp env))))
       ((math-exp? lcexp) (let ((op (math-exp->op lcexp))
                                (left (apply-expression (math-exp->left lcexp) env))
                                (right (apply-expression (math-exp->right lcexp) env)))
@@ -287,7 +315,7 @@
                               (the-parameter-value (apply-expression (app-exp->parameter-input lcexp) env))
                               (the-new-env (extend-env the-lambda-param-name the-parameter-value env)))
                           (apply-expression the-lambda the-new-env))))))
-                          
+                           
 
 (define run-program
   (lambda (c0d3-src env)
@@ -295,9 +323,13 @@
 
 (define myC0d3 '(run (func gets (a) does (do-math + (get-value a) (literal 2))) with (literal 5)))
 (define c0d3-bool '(test > (literal 5) (literal 2)))
-(define env (extend-env* '(c d e) '(1 2 3) (empty-env)))
-(parse-expression c0d3-bool)
-(run-program c0d3-bool env)
+(define c0d3-if '(ask-question
+                  (test < (get-value a) (literal 7))
+                  if-true-do-> (ask-question (test > (get-value a) (literal 5)) if-true-do-> (literal 8) if-false-do-> (literal 9))
+                  if-false-do-> (literal 0)))
+(define env (extend-env* '(a c d e) '(6 1 2 3) (empty-env)))
+(parse-expression '(display (literal 7)))
+;(run-program '(display (literal 7)) env)
 
 
          
