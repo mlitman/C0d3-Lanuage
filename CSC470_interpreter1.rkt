@@ -348,8 +348,8 @@
                   if-true-do-> (ask-question (test > (get-value a) (literal 5)) if-true-do-> (literal 8) if-false-do-> (literal 9))
                   if-false-do-> (literal 0)))
 (define env (extend-env* '(a c d e) '(6 1 2 3) (empty-env)))
-(parse-expression '(display (literal 7)))
-(run-program '(display (literal 7)) env)
+(parse-expression '(do-in-order (literal 7) (literal 8) (display (literal 10))))
+;(run-program '(display (literal 7)) env)
 
 
          
