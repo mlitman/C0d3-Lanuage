@@ -57,6 +57,10 @@
   (lambda (exp)
     (list 'print-exp exp)))
 
+(define do-in-order-exp
+  (lambda (lo-exp)
+    (cons 'do-in-order-exp lo-exp)))
+
 (define if-exp
   (lambda (bool-exp true-exp false-exp)
     (list 'if-exp bool-exp true-exp false-exp)))
@@ -89,6 +93,10 @@
 (define print-exp->exp
   (lambda (print-exp)
     (cadr print-exp)))
+
+(define do-in-order-exp->list-of-expressions
+  (lambda (do-in-order-exp)
+    (cdr do-in-order-exp)))
 
 (define bool-exp->op
   (lambda (bool-exp)
@@ -155,6 +163,10 @@
   (lambda (lc-exp)
     (eq? (lc-exp->type lc-exp) 'print-exp)))
 
+(define do-in-order-exp?
+  (lambda (lc-exp)
+    (eq? (lc-exp->type lc-exp) 'do-in-order-exp)))
+
 (define bool-exp?
   (lambda (lc-exp)
     (eq? (lc-exp->type lc-exp) 'bool-exp)))
@@ -183,6 +195,10 @@
 (define display-exp->exp
   (lambda (display-exp)
     (cadr display-exp)))
+
+(define do-in-order-exp->list-of-expressions
+  (lambda (do-in-order-exp)
+    (cdr do-in-order-exp)))
 
 (define test-exp->op
   (lambda (test-exp)
@@ -249,18 +265,20 @@
 ; (test < (get-value a) (literal 7))
 ; (ask-question (test < (get-value a) (literal 7)) if-true-do-> (literal 1) if-false-do-> (literal 0))
 ; (display (literal 7)) NOTE: displayed values are in purple (resolved are in blue)
+; (do-in-order c0d3*)
 
 (define parse-expression
   (lambda (c0d3)
     (cond
       ((eq? (car c0d3) 'literal) (lit-exp (literal-exp->value c0d3)))
-      ((eq? (car c0d3) 'display) (print-exp (display-exp->exp c0d3)))
+      ((eq? (car c0d3) 'display) (print-exp (parse-expression (display-exp->exp c0d3))))
       ((eq? (car c0d3) 'test) (bool-exp (test-exp->op c0d3)
                                         (parse-expression (test-exp->left c0d3))
                                         (parse-expression (test-exp->right c0d3))))
       ((eq? (car c0d3) 'ask-question) (if-exp (parse-expression (question-exp->test-exp c0d3))
                                               (parse-expression (question-exp->true-exp c0d3))
                                               (parse-expression (question-exp->false-exp c0d3))))
+      ((eq? (car c0d3) 'do-in-order)
       ((eq? (car c0d3) 'do-math) (math-exp (do-math->op c0d3)
                                            (parse-expression (do-math->left c0d3))
                                            (parse-expression (do-math->right c0d3))))
@@ -299,6 +317,7 @@
                                (left (apply-expression (bool-exp->left lcexp) env))
                                (right (apply-expression (bool-exp->right lcexp) env)))
                            (resolve-boolean op left right)))
+      ((print-exp? lcexp) (apply-expression (print-exp->exp lcexp) env))
       ((if-exp? lcexp) (let* ((bool-result (apply-expression (if-exp->bool-exp lcexp) env))
                              (true-exp (if-exp->true-exp lcexp))
                              (false-exp (if-exp->false-exp lcexp)))
@@ -315,7 +334,8 @@
                               (the-parameter-value (apply-expression (app-exp->parameter-input lcexp) env))
                               (the-new-env (extend-env the-lambda-param-name the-parameter-value env)))
                           (apply-expression the-lambda the-new-env))))))
-                           
+
+
 
 (define run-program
   (lambda (c0d3-src env)
@@ -329,7 +349,7 @@
                   if-false-do-> (literal 0)))
 (define env (extend-env* '(a c d e) '(6 1 2 3) (empty-env)))
 (parse-expression '(display (literal 7)))
-;(run-program '(display (literal 7)) env)
+(run-program '(display (literal 7)) env)
 
 
          
