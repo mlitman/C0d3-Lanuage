@@ -53,6 +53,10 @@
   (lambda (op left right)
     (list 'bool-exp op left right)))
 
+(define repeat-exp
+  (lambda (count exp)
+    (list 'repeat-exp count exp)))
+
 (define create-var-exp
   (lambda (var-name var-val)
     (list 'create-var-exp var-name var-val)))
@@ -93,6 +97,14 @@
 (define var-exp->var-name
   (lambda (var-exp)
     (cadr var-exp)))
+
+(define repeat-exp->count
+  (lambda (repeat-exp)
+    (cadr repeat-exp)))
+
+(define repeat-exp->exp
+  (lambda (repeat-exp)
+    (caddr repeat-exp)))
 
 (define create-var-exp->var-name
   (lambda (create-var-exp)
@@ -175,6 +187,10 @@
   (lambda (lc-exp)
     (eq? (lc-exp->type lc-exp) 'print-exp)))
 
+(define repeat-exp?
+  (lambda (lc-exp)
+    (eq? (lc-exp->type lc-exp) 'repeat-exp)))
+
 (define create-var-exp?
   (lambda (lc-exp)
      (eq? (lc-exp->type lc-exp) 'create-var-exp)))
@@ -211,6 +227,14 @@
 (define display-exp->exp
   (lambda (display-exp)
     (cadr display-exp)))
+
+(define repeat-exp->times
+  (lambda (repeat-exp)
+    (cadr repeat-exp)))
+
+(define repeat-exp->what
+  (lambda (repeat-exp)
+    (cadddr repeat-exp)))
 
 (define remember-exp->var-name
   (lambda (remember-exp)
@@ -291,6 +315,7 @@
 ; (display (literal 7)) NOTE: displayed values are in purple (resolved are in blue)
 ; (do-in-order c0d3*)
 ; (remember a 13)
+; (repeat 10 times (display (literal 5))
         
 (define parse-expression
   (lambda (c0d3)
@@ -300,6 +325,8 @@
       ((eq? (car c0d3) 'test) (bool-exp (test-exp->op c0d3)
                                         (parse-expression (test-exp->left c0d3))
                                         (parse-expression (test-exp->right c0d3))))
+      ((eq? (car c0d3) 'repeat) (repeat-exp (parse-expression (repeat-exp->times c0d3))
+                                            (parse-expression (repeat-exp->what c0d3))))
       ((eq? (car c0d3) 'remember) (create-var-exp
                                        (remember-exp->var-name c0d3)
                                        (parse-expression (remember-exp->var-val c0d3))))
@@ -342,7 +369,16 @@
     (cond
       ((lit-exp? lcexp) (lit-exp->value lcexp))
       ((var-exp? lcexp) (apply-env (var-exp->var-name lcexp) env))
-      ((print-exp? lcexp) (write (apply-expression (print-exp->exp lcexp) env)))
+      ((print-exp? lcexp) (write (apply-expression (print-exp->exp lcexp) env))) 
+      ((repeat-exp? lcexp) (letrec ((theExpression (repeat-exp->exp lcexp))
+                                 (theNumberOfTimesExpression (repeat-exp->count lcexp))
+                                 (theEvaluatedExpression (apply-expression theExpression env))
+                                 (theEvaluatedNumberOfTimesExpression (apply-expression theNumberOfTimesExpression env))
+                                 (repeatFunc (lambda (count)
+                                               (if (= 0 count)
+                                                   '()
+                                                   (cons theEvaluatedExpression (repeatFunc (- count 1)))))))
+                             (repeatFunc theEvaluatedNumberOfTimesExpression))) ;(repeatFunc theEvaluatedNumberOfTimesExpression)))))
       ((create-var-exp? lcexp) (let ((name (create-var-exp->var-name lcexp))
                                      (val (apply-expression (create-var-exp->var-val lcexp) env)))
                                  (extend-env name val env)))
@@ -392,12 +428,13 @@
                   if-false-do-> (literal 0)))
 (define env (extend-env* '(a c d e) '(6 1 2 3) (empty-env)))
 ;'(do-in-order (literal 7) (remember a (literal 13)) (literal 8) (display (get-value a))
-(parse-expression '(remember a (literal 13)))
-(run-program '(do-in-order (remember t (literal 3))
-                           (remember z (literal 21))
-                           (do-math + (get-value t) (get-value z))
-                           (remember r (literal 14))
-                           (get-value r)) env)
+;(repeat-exp->exp (parse-expression '(repeat (literal 10) times (literal 13))))
+(run-program '(repeat (literal 10) times (literal 13)) env)
+;(run-program '(do-in-order (remember t (literal 3))
+ ;                          (remember z (literal 21))
+ ;                          (do-math + (get-value t) (get-value z))
+ ;                          (remember r (literal 14))
+ ;                          (get-value r)) env)
 
 
          
