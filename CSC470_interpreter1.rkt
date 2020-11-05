@@ -6,14 +6,14 @@
   (lambda () (list 'empty-scope)))
 
 (define extend-scope
-  (lambda (name value env)
-    (list 'extend-scope name value env)))
+  (lambda (name value scope)
+    (list 'extend-scope name value scope)))
 
 (define extend-scope*
-  (lambda (lon lov env)
+  (lambda (lon lov scope)
     (cond
-      ((null? lon) env)
-      (else (extend-scope* (cdr lon) (cdr lov) (extend-scope (car lon) (car lov) env))))))
+      ((null? lon) scope)
+      (else (extend-scope* (cdr lon) (cdr lov) (extend-scope (car lon) (car lov) scope))))))
 
 (define get-name
   (lambda (scope) (cadr scope)))
@@ -40,9 +40,39 @@
   (lambda (var-name scope)
     (not (eq? (apply-scope var-name scope) #f))))
 
+(define push-scope
+  (lambda (scope env)
+    (cons scope env)))
+
+(define peek-scope
+  (lambda (env)
+    (if (null? env)
+        #f
+        (car env))))
+
+(define remove-scope
+  (lambda (env)
+    (cdr env)))
+
+
+(define empty-env
+  (lambda () '((empty-scope))))
+
+(define extend-env
+  (lambda (var-name var-value env)
+    (let* ((top-scope (peek-scope env))
+           (extended-scope (extend-scope var-name var-value top-scope))
+           (temp-env (remove-scope env)))
+      (push-scope extended-scope temp-env))))
+
+
 (define apply-env
-  (lambda (var-name stack-of-scopes)
-    #boil down to the most local definition of var-name in our stack of scopes
+  (lambda (var-name env)
+    (cond
+      ((null? env) #f)
+      ((has-binding? var-name (peek-scope env))
+       (apply-scope var-name (peek-scope env)))
+      (else (apply-env var-name (remove-scope env))))))     
     
 
 ; Grammar Constructors
@@ -433,16 +463,17 @@
                   (test < (get-value a) (literal 7))
                   if-true-do-> (ask-question (test > (get-value a) (literal 5)) if-true-do-> (literal 8) if-false-do-> (literal 9))
                   if-false-do-> (literal 0)))
-(define env (extend-env* '(a c d e) '(6 1 2 3) (empty-env)))
+(define env (extend-env 'a 6 (extend-env 'b 7 (empty-env))))
 ;'(do-in-order (literal 7) (remember a (literal 13)) (literal 8) (display (get-value a))
 ;(repeat-exp->exp (parse-expression '(repeat (literal 10) times (literal 13))))
 ;(run-program '(repeat (literal 10) times (literal 13)) env)
 ;(parse-expression '(do-in-order (remember a (literal 1)) while (test < (get-value a) (literal 7))
-(run-program '(repeat (literal 10) times (do-in-order (remember t (literal 3))
-                          (remember z (literal 21))
-                          (do-math + (get-value t) (get-value z))
-                          (remember r (literal 14))
-                          (get-value r))) env)
+;(run-program '(repeat (literal 10) times (do-in-order (remember t (literal 3))
+;                          (remember z (literal 21))
+;                          (do-math + (get-value t) (get-value z))
+;                          (remember r (literal 14))
+;                          (get-value r))) env)
+env
 
 
          
