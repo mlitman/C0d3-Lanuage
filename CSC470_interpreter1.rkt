@@ -2,43 +2,48 @@
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-advanced-reader.ss" "lang")((modname CSC470_interpreter1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
 ; Enviroment Initializers
-(define empty-env
-  (lambda () (list 'empty-env)))
+(define empty-scope
+  (lambda () (list 'empty-scope)))
 
-(define extend-env
+(define extend-scope
   (lambda (name value env)
-    (list 'extend-env name value env)))
+    (list 'extend-scope name value env)))
 
-(define extend-env*
+(define extend-scope*
   (lambda (lon lov env)
     (cond
       ((null? lon) env)
-      (else (extend-env* (cdr lon) (cdr lov) (extend-env (car lon) (car lov) env))))))
+      (else (extend-scope* (cdr lon) (cdr lov) (extend-scope (car lon) (car lov) env))))))
 
 (define get-name
-  (lambda (env) (cadr env)))
+  (lambda (scope) (cadr scope)))
 
 (define get-value
-  (lambda (env) (caddr env)))
+  (lambda (scope) (caddr scope)))
 
-(define get-env
-  (lambda (env) (cadddr env)))
+(define get-scope
+  (lambda (scope) (cadddr scope)))
 
-(define empty-env?
-  (lambda (env) (eq? 'empty-env (car env))))
+(define empty-scope?
+  (lambda (env) (eq? 'empty-scope (car env))))
 
-(define apply-env
-  (lambda (var-name env)
+(define apply-scope
+  (lambda (var-name scope)
     (cond
-      ((empty-env? env) #f)
+      ((empty-scope? env) #f)
       (else
-       (if (eq? var-name (get-name env))
-           (get-value env)
-           (apply-env var-name (get-env env)))))))
+       (if (eq? var-name (get-name scope))
+           (get-value scope)
+           (apply-scope var-name (get-scope scope)))))))
 
 (define has-binding?
-  (lambda (var-name env)
-    (not (eq? (apply-env var-name env) #f))))
+  (lambda (var-name scope)
+    (not (eq? (apply-scope var-name scope) #f))))
+
+(define apply-env
+  (lambda (var-name stack-of-scopes)
+    #boil down to the most local definition of var-name in our stack of scopes
+    
 
 ; Grammar Constructors
 (define lit-exp
@@ -316,6 +321,8 @@
 ; (do-in-order c0d3*)
 ; (remember a 13)
 ; (repeat 10 times (display (literal 5))
+; (update a (literal 15))
+; (while bool-expression body) 
         
 (define parse-expression
   (lambda (c0d3)
@@ -429,12 +436,13 @@
 (define env (extend-env* '(a c d e) '(6 1 2 3) (empty-env)))
 ;'(do-in-order (literal 7) (remember a (literal 13)) (literal 8) (display (get-value a))
 ;(repeat-exp->exp (parse-expression '(repeat (literal 10) times (literal 13))))
-(run-program '(repeat (literal 10) times (literal 13)) env)
-;(run-program '(do-in-order (remember t (literal 3))
- ;                          (remember z (literal 21))
- ;                          (do-math + (get-value t) (get-value z))
- ;                          (remember r (literal 14))
- ;                          (get-value r)) env)
+;(run-program '(repeat (literal 10) times (literal 13)) env)
+;(parse-expression '(do-in-order (remember a (literal 1)) while (test < (get-value a) (literal 7))
+(run-program '(repeat (literal 10) times (do-in-order (remember t (literal 3))
+                          (remember z (literal 21))
+                          (do-math + (get-value t) (get-value z))
+                          (remember r (literal 14))
+                          (get-value r))) env)
 
 
          
