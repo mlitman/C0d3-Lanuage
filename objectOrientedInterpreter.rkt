@@ -7,14 +7,28 @@
     (list 'empty-object)))
 
 (define class
-  (lambda (base-class list-of-fields list-of-constructors list-of-methods)
-    (list 'class base-class list-of-fields list-of-constructors list-of-methods)))
+  (lambda (base-class list-of-fields list-of-values list-of-methods)
+    (letrec ((create-pairs-for-scope (lambda (lon lov)
+                             (cond
+                               ((null? lon) '())
+                               (else (cons (list (car lon)
+                                                 (car lov))
+                                           (create-pairs-for-scope (cdr lon) (cdr lov)))))))
+             (global-env (list (create-pairs-for-scope list-of-fields
+                                                       list-of-values))))
+      (list 'class base-class global-env list-of-methods))))
+
+
 
 (define Person
-  (class empty-object '(firstName lastName age) '() '()))
+  (lambda (list-of-field-names list-of-values)
+    (class (empty-object) list-of-field-names list-of-values '())))
 
-;define mike to-be a person...how could I do it?
-;define dave to-be another instance of person...how could I do it?
+(define p1 (Person '(fname lname age) '(Mike Litman 21)))
+(define p2 (Person '(fname lname age) '(Dave Smith 18)))
+p1
+p2
+
 
   
 
