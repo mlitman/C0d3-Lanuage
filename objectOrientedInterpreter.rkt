@@ -13,23 +13,23 @@
                                (else (cons (list (car lon)
                                                  (car lov))
                                            (create-pairs-for-scope (cdr lon) (cdr lov)))))))
-             (global-env (list (create-pairs-for-scope list-of-field-names
-                                                       list-of-field-value))))
-      (list 'class base-class global-env list-of-methods))))
+             (global-env (list (create-pairs-for-scope (append list-of-field-names list-of-method-names)
+                                                       (append list-of-field-values list-of-method-values)))))
+      (list 'class base-class global-env))))
 
 (define empty-object
   (lambda ()
-    (class '(no-parent) '() '() '(getValue) '((lambda (var-name) 'need-logic-here)))))
+    (class '(no-parent) '() '() '(getValue) (list (lambda (var-name) 'need-logic-here-PARTOFHW)))))
 
-
+(define sendMessage ;HW HERE TOO
 
 (define Person
   (lambda (list-of-field-names list-of-values)
-    (class (empty-object) list-of-field-names list-of-values '())))
+    (class (empty-object) list-of-field-names list-of-values '() '())))
 
 (define p1 (Person '(fname lname age) '(Mike Litman 21)))
 (define p2 (Person '(fname lname age) '(Dave Smith 18)))
-;(send-message p1 getField '(fname))
+(send-message p1 getValue '(fname))
 p2
 
 
