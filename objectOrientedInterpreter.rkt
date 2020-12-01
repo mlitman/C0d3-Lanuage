@@ -77,8 +77,17 @@
 
 (define p1 (Person '(fname lname age) '(Mike Litman 21)))
 (define p2 (Person '(fname lname age) '(Dave Smith 18)))
-(sendMessage p2 'getValue '(lname))
+(sendMessage p2 'getValue '(age))
 
+(define code '(class Person (fname lname age)))
+;(class (empty-object) list-of-field-names list-of-values '() '())))
+(define parser
+  (lambda (code)
+    (let (type (car code))
+      (cond
+        ((eq? type class) '?)))))
 
+(parser code)
+        
 
 
